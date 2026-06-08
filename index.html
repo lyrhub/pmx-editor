@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMX 模型编辑器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header class="toolbar">
+            <div class="toolbar-left">
+                <h1>PMX Editor</h1>
+                <button id="btn-open" class="btn btn-primary">📂 打开文件</button>
+                <button id="btn-save" class="btn btn-success" disabled>💾 保存</button>
+                <input type="file" id="file-input" accept=".pmx" hidden>
+            </div>
+            <div class="toolbar-right">
+                <span id="file-name" class="file-info">未加载文件</span>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <aside class="sidebar">
+                <nav class="nav-tabs">
+                    <button class="tab active" data-panel="info">📋 信息</button>
+                    <button class="tab" data-panel="vertices">📐 顶点</button>
+                    <button class="tab" data-panel="materials">🎨 材质</button>
+                    <button class="tab" data-panel="bones">🦴 骨骼</button>
+                    <button class="tab" data-panel="morphs">😊 表情</button>
+                    <button class="tab" data-panel="rigidbodies">⚙️ 刚体</button>
+                    <button class="tab" data-panel="joints">🔗 关节</button>
+                </nav>
+
+                <div class="panel-content">
+                    <!-- Info Panel -->
+                    <div id="panel-info" class="panel active">
+                        <div class="panel-section">
+                            <h3>模型信息</h3>
+                            <div class="form-group">
+                                <label>名称 (日文)</label>
+                                <input type="text" id="model-name-local" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>名称 (英文)</label>
+                                <input type="text" id="model-name-universal" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>注释 (日文)</label>
+                                <textarea id="model-comment-local" rows="3" disabled></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>注释 (英文)</label>
+                                <textarea id="model-comment-universal" rows="3" disabled></textarea>
+                            </div>
+                        </div>
+                        <div class="panel-section">
+                            <h3>文件统计</h3>
+                            <div class="stats-grid" id="stats-grid">
+                                <div class="stat-item"><span class="stat-label">版本</span><span class="stat-value" id="stat-version">-</span></div>
+                                <div class="stat-item"><span class="stat-label">编码</span><span class="stat-value" id="stat-encoding">-</span></div>
+                                <div class="stat-item"><span class="stat-label">顶点数</span><span class="stat-value" id="stat-vertices">-</span></div>
+                                <div class="stat-item"><span class="stat-label">面数</span><span class="stat-value" id="stat-surfaces">-</span></div>
+                                <div class="stat-item"><span class="stat-label">材质数</span><span class="stat-value" id="stat-materials">-</span></div>
+                                <div class="stat-item"><span class="stat-label">骨骼数</span><span class="stat-value" id="stat-bones">-</span></div>
+                                <div class="stat-item"><span class="stat-label">表情数</span><span class="stat-value" id="stat-morphs">-</span></div>
+                                <div class="stat-item"><span class="stat-label">刚体数</span><span class="stat-value" id="stat-rigidbodies">-</span></div>
+                                <div class="stat-item"><span class="stat-label">关节数</span><span class="stat-value" id="stat-joints">-</span></div>
+                                <div class="stat-item"><span class="stat-label">纹理数</span><span class="stat-value" id="stat-textures">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vertices Panel -->
+                    <div id="panel-vertices" class="panel">
+                        <div class="panel-section">
+                            <h3>顶点列表</h3>
+                            <div class="list-controls">
+                                <input type="text" id="vertex-search" placeholder="搜索顶点索引...">
+                                <span id="vertex-count" class="count-badge">0</span>
+                            </div>
+                            <div class="virtual-list" id="vertex-list"></div>
+                        </div>
+                        <div class="panel-section" id="vertex-detail" style="display:none;">
+                            <h3>顶点详情 #<span id="vertex-index">0</span></h3>
+                            <div class="form-group">
+                                <label>位置 (X, Y, Z)</label>
+                                <div class="vec3-input">
+                                    <input type="number" step="0.001" id="vertex-pos-x">
+                                    <input type="number" step="0.001" id="vertex-pos-y">
+                                    <input type="number" step="0.001" id="vertex-pos-z">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>法线 (X, Y, Z)</label>
+                                <div class="vec3-input">
+                                    <input type="number" step="0.001" id="vertex-normal-x">
+                                    <input type="number" step="0.001" id="vertex-normal-y">
+                                    <input type="number" step="0.001" id="vertex-normal-z">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>UV (U, V)</label>
+                                <div class="vec2-input">
+                                    <input type="number" step="0.001" id="vertex-uv-u">
+                                    <input type="number" step="0.001" id="vertex-uv-v">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>边缘缩放</label>
+                                <input type="number" step="0.01" id="vertex-edge-scale">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Materials Panel -->
+                    <div id="panel-materials" class="panel">
+                        <div class="panel-section">
+                            <h3>材质列表</h3>
+                            <div class="list-controls">
+                                <input type="text" id="material-search" placeholder="搜索材质名称...">
+                                <span id="material-count" class="count-badge">0</span>
+                            </div>
+                            <div class="item-list" id="material-list"></div>
+                        </div>
+                        <div class="panel-section" id="material-detail" style="display:none;">
+                            <h3>材质详情</h3>
+                            <div class="form-group">
+                                <label>名称 (日文)</label>
+                                <input type="text" id="mat-name-local">
+                            </div>
+                            <div class="form-group">
+                                <label>名称 (英文)</label>
+                                <input type="text" id="mat-name-universal">
+                            </div>
+                            <div class="form-group">
+                                <label>漫反射颜色 (RGBA)</label>
+                                <div class="color-input">
+                                    <input type="color" id="mat-diffuse-color">
+                                    <input type="number" step="0.01" min="0" max="1" id="mat-diffuse-alpha" placeholder="A">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>高光颜色 (RGB)</label>
+                                <input type="color" id="mat-specular-color">
+                            </div>
+                            <div class="form-group">
+                                <label>高光强度</label>
+                                <input type="number" step="0.1" id="mat-specular-strength">
+                            </div>
+                            <div class="form-group">
+                                <label>环境光颜色 (RGB)</label>
+                                <input type="color" id="mat-ambient-color">
+                            </div>
+                            <div class="form-group">
+                                <label>边缘颜色</label>
+                                <div class="color-input">
+                                    <input type="color" id="mat-edge-color">
+                                    <input type="number" step="0.01" min="0" max="1" id="mat-edge-alpha" placeholder="A">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>边缘大小</label>
+                                <input type="number" step="0.01" id="mat-edge-size">
+                            </div>
+                            <div class="form-group">
+                                <label>面数</label>
+                                <input type="number" id="mat-surface-count" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>标志</label>
+                                <div class="flag-group">
+                                    <label><input type="checkbox" id="mat-flag-nocull"> 双面</label>
+                                    <label><input type="checkbox" id="mat-flag-shadow"> 地面阴影</label>
+                                    <label><input type="checkbox" id="mat-flag-drawshadow"> 投射阴影</label>
+                                    <label><input type="checkbox" id="mat-flag-receiveshadow"> 接受阴影</label>
+                                    <label><input type="checkbox" id="mat-flag-edge"> 边缘</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bones Panel -->
+                    <div id="panel-bones" class="panel">
+                        <div class="panel-section">
+                            <h3>骨骼列表</h3>
+                            <div class="list-controls">
+                                <input type="text" id="bone-search" placeholder="搜索骨骼名称...">
+                                <span id="bone-count" class="count-badge">0</span>
+                            </div>
+                            <div class="item-list" id="bone-list"></div>
+                        </div>
+                        <div class="panel-section" id="bone-detail" style="display:none;">
+                            <h3>骨骼详情</h3>
+                            <div class="form-group">
+                                <label>名称 (日文)</label>
+                                <input type="text" id="bone-name-local">
+                            </div>
+                            <div class="form-group">
+                                <label>名称 (英文)</label>
+                                <input type="text" id="bone-name-universal">
+                            </div>
+                            <div class="form-group">
+                                <label>位置 (X, Y, Z)</label>
+                                <div class="vec3-input">
+                                    <input type="number" step="0.001" id="bone-pos-x">
+                                    <input type="number" step="0.001" id="bone-pos-y">
+                                    <input type="number" step="0.001" id="bone-pos-z">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>父骨骼索引</label>
+                                <input type="number" id="bone-parent-index">
+                            </div>
+                            <div class="form-group">
+                                <label>层级</label>
+                                <input type="number" id="bone-layer">
+                            </div>
+                            <div class="form-group">
+                                <label>标志</label>
+                                <div class="flag-group">
+                                    <label><input type="checkbox" id="bone-flag-indexed-tail"> 索引尾部</label>
+                                    <label><input type="checkbox" id="bone-flag-rotatable"> 旋转</label>
+                                    <label><input type="checkbox" id="bone-flag-translatable"> 平移</label>
+                                    <label><input type="checkbox" id="bone-flag-visible"> 可见</label>
+                                    <label><input type="checkbox" id="bone-flag-enabled"> 启用</label>
+                                    <label><input type="checkbox" id="bone-flag-ik"> IK</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Morphs Panel -->
+                    <div id="panel-morphs" class="panel">
+                        <div class="panel-section">
+                            <h3>表情列表</h3>
+                            <div class="list-controls">
+                                <input type="text" id="morph-search" placeholder="搜索表情名称...">
+                                <span id="morph-count" class="count-badge">0</span>
+                            </div>
+                            <div class="item-list" id="morph-list"></div>
+                        </div>
+                        <div class="panel-section" id="morph-detail" style="display:none;">
+                            <h3>表情详情</h3>
+                            <div class="form-group">
+                                <label>名称 (日文)</label>
+                                <input type="text" id="morph-name-local">
+                            </div>
+                            <div class="form-group">
+                                <label>名称 (英文)</label>
+                                <input type="text" id="morph-name-universal">
+                            </div>
+                            <div class="form-group">
+                                <label>面板类型</label>
+                                <select id="morph-panel">
+                                    <option value="0">系统保留</option>
+                                    <option value="1">眉毛</option>
+                                    <option value="2">眼睛</option>
+                                    <option value="3">嘴巴</option>
+                                    <option value="4">其他</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>类型</label>
+                                <input type="text" id="morph-type" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>偏移数据数量</label>
+                                <input type="number" id="morph-offset-count" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rigidbodies Panel -->
+                    <div id="panel-rigidbodies" class="panel">
+                        <div class="panel-section">
+                            <h3>刚体列表</h3>
+                            <div class="list-controls">
+                                <input type="text" id="rigidbody-search" placeholder="搜索刚体名称...">
+                                <span id="rigidbody-count" class="count-badge">0</span>
+                            </div>
+                            <div class="item-list" id="rigidbody-list"></div>
+                        </div>
+                        <div class="panel-section" id="rigidbody-detail" style="display:none;">
+                            <h3>刚体详情</h3>
+                            <div class="form-group">
+                                <label>名称 (日文)</label>
+                                <input type="text" id="rb-name-local">
+                            </div>
+                            <div class="form-group">
+                                <label>名称 (英文)</label>
+                                <input type="text" id="rb-name-universal">
+                            </div>
+                            <div class="form-group">
+                                <label>形状</label>
+                                <select id="rb-shape">
+                                    <option value="0">球体</option>
+                                    <option value="1">方盒</option>
+                                    <option value="2">胶囊</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>尺寸 (X, Y, Z)</label>
+                                <div class="vec3-input">
+                                    <input type="number" step="0.001" id="rb-size-x">
+                                    <input type="number" step="0.001" id="rb-size-y">
+                                    <input type="number" step="0.001" id="rb-size-z">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>位置 (X, Y, Z)</label>
+                                <div class="vec3-input">
+                                    <input type="number" step="0.001" id="rb-pos-x">
+                                    <input type="number" step="0.001" id="rb-pos-y">
+                                    <input type="number" step="0.001" id="rb-pos-z">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>质量</label>
+                                <input type="number" step="0.01" id="rb-mass">
+                            </div>
+                            <div class="form-group">
+                                <label>物理模式</label>
+                                <select id="rb-physics-mode">
+                                    <option value="0">跟随骨骼</option>
+                                    <option value="1">物理演算</option>
+                                    <option value="2">物理+骨骼</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Joints Panel -->
+                    <div id="panel-joints" class="panel">
+                        <div class="panel-section">
+                            <h3>关节列表</h3>
+                            <div class="list-controls">
+                                <input type="text" id="joint-search" placeholder="搜索关节名称...">
+                                <span id="joint-count" class="count-badge">0</span>
+                            </div>
+                            <div class="item-list" id="joint-list"></div>
+                        </div>
+                        <div class="panel-section" id="joint-detail" style="display:none;">
+                            <h3>关节详情</h3>
+                            <div class="form-group">
+                                <label>名称 (日文)</label>
+                                <input type="text" id="joint-name-local">
+                            </div>
+                            <div class="form-group">
+                                <label>名称 (英文)</label>
+                                <input type="text" id="joint-name-universal">
+                            </div>
+                            <div class="form-group">
+                                <label>类型</label>
+                                <select id="joint-type">
+                                    <option value="0">Spring 6DOF</option>
+                                    <option value="1">6DOF</option>
+                                    <option value="2">P2P</option>
+                                    <option value="3">ConeTwist</option>
+                                    <option value="4">Slider</option>
+                                    <option value="5">Hinge</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>位置 (X, Y, Z)</label>
+                                <div class="vec3-input">
+                                    <input type="number" step="0.001" id="joint-pos-x">
+                                    <input type="number" step="0.001" id="joint-pos-y">
+                                    <input type="number" step="0.001" id="joint-pos-z">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="viewport">
+                <canvas id="viewport-canvas"></canvas>
+                <div class="viewport-controls">
+                    <button id="btn-wireframe" class="btn btn-small" title="线框模式">🔲</button>
+                    <button id="btn-bones-toggle" class="btn btn-small" title="显示骨骼">🦴</button>
+                    <button id="btn-reset-camera" class="btn btn-small" title="重置视角">🎯</button>
+                </div>
+                <div class="viewport-info">
+                    <span id="viewport-fps">FPS: 0</span>
+                    <span id="viewport-tris">三角面: 0</span>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="loading-overlay" class="loading-overlay" style="display:none;">
+        <div class="loading-spinner"></div>
+        <p>正在解析 PMX 文件...</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="pmx-parser.js"></script>
+    <script src="pmx-writer.js"></script>
+    <script src="viewport.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
