@@ -11,6 +11,32 @@
     let selectedRigidbodyIndex = -1;
     let selectedJointIndex = -1;
 
+    // Initialize i18n
+    I18n.applyTranslations();
+
+    // Language switcher
+    const btnLangZh = document.getElementById('btn-lang-zh');
+    const btnLangEn = document.getElementById('btn-lang-en');
+
+    function updateLangButtons() {
+        btnLangZh.classList.toggle('active', I18n.currentLang === 'zh');
+        btnLangEn.classList.toggle('active', I18n.currentLang === 'en');
+    }
+
+    btnLangZh.addEventListener('click', () => {
+        I18n.setLang('zh');
+        updateLangButtons();
+        if (model) refreshDynamicContent();
+    });
+
+    btnLangEn.addEventListener('click', () => {
+        I18n.setLang('en');
+        updateLangButtons();
+        if (model) refreshDynamicContent();
+    });
+
+    updateLangButtons();
+
     // Initialize viewport
     const canvas = document.getElementById('viewport-canvas');
     viewport = new PMXViewport(canvas);
@@ -38,7 +64,7 @@
             viewport.loadModel(model);
             btnSave.disabled = false;
         } catch (err) {
-            alert(`解析 PMX 文件失败: ${err.message}`);
+            alert(`${I18n.t('error.parseFailed')}: ${err.message}`);
             console.error(err);
         } finally {
             document.getElementById('loading-overlay').style.display = 'none';
@@ -60,7 +86,7 @@
             a.click();
             URL.revokeObjectURL(url);
         } catch (err) {
-            alert(`保存 PMX 文件失败: ${err.message}`);
+            alert(`${I18n.t('error.saveFailed')}: ${err.message}`);
             console.error(err);
         }
     });
@@ -88,6 +114,47 @@
 
     document.getElementById('btn-reset-camera').addEventListener('click', () => {
         viewport.resetCamera();
+    });
+
+    // Helper: get morph type names based on current language
+    function getMorphTypeNames() {
+        return [
+            I18n.t('morphs.typeGroup'),
+            I18n.t('morphs.typeVertex'),
+            I18n.t('morphs.typeBone'),
+            I18n.t('morphs.typeUV'),
+            I18n.t('morphs.typeUVExt1'),
+            I18n.t('morphs.typeUVExt2'),
+            I18n.t('morphs.typeUVExt3'),
+            I18n.t('morphs.typeUVExt4'),
+            I18n.t('morphs.typeMaterial'),
+            I18n.t('morphs.typeFlip'),
+            I18n.t('morphs.typeImpulse')
+        ];
+    }
+
+    // Refresh dynamic (JS-generated) content on language change
+    function refreshDynamicContent() {
+        populateVertexList();
+        populateMaterialList();
+        populateBoneList();
+        populateMorphList();
+        populateRigidbodyList();
+        populateJointList();
+
+        // Update viewport triangle text
+        if (model) {
+            const trisEl = document.getElementById('viewport-tris');
+            if (trisEl) {
+                const trisSpan = trisEl.querySelector('[data-i18n]');
+                if (trisSpan) trisSpan.textContent = I18n.t('viewport.triangles');
+            }
+        }
+    }
+
+    // Listen for language change events
+    window.addEventListener('langChanged', () => {
+        if (model) refreshDynamicContent();
     });
 
     function updateUI() {
@@ -132,30 +199,28 @@
         populateJointList();
     }
 
-    // Vertex list (virtual scrolling for large lists)
+    // Vertex list
     function populateVertexList() {
         const list = document.getElementById('vertex-list');
         const count = model.vertices.length;
         document.getElementById('vertex-count').textContent = count.toLocaleString();
 
-        // Show first 200 vertices
         const maxShow = Math.min(count, 200);
         list.innerHTML = '';
         for (let i = 0; i < maxShow; i++) {
-            const item = createListItem(i, `顶点 ${i} (${model.vertices[i].position.map(v => v.toFixed(2)).join(', ')})`);
+            const item = createListItem(i, `${I18n.t('vertices.item')} ${i} (${model.vertices[i].position.map(v => v.toFixed(2)).join(', ')})`);
             item.addEventListener('click', () => selectVertex(i));
             list.appendChild(item);
         }
         if (count > 200) {
             const more = document.createElement('div');
             more.className = 'list-item';
-            more.textContent = `... 还有 ${(count - 200).toLocaleString()} 个顶点`;
+            more.textContent = `... ${I18n.t('vertices.more', (count - 200).toLocaleString())}`;
             more.style.color = 'var(--text-secondary)';
             more.style.justifyContent = 'center';
             list.appendChild(more);
         }
 
-        // Search
         document.getElementById('vertex-search').oninput = (e) => {
             const idx = parseInt(e.target.value);
             if (!isNaN(idx) && idx >= 0 && idx < count) {
@@ -180,7 +245,6 @@
         document.getElementById('vertex-uv-v').value = vertex.uv[1];
         document.getElementById('vertex-edge-scale').value = vertex.edgeScale;
 
-        // Bind changes
         const bindVec = (prefix, arr) => {
             ['x', 'y', 'z'].forEach((axis, i) => {
                 const el = document.getElementById(`${prefix}-${axis}`);
@@ -202,7 +266,7 @@
 
         for (let i = 0; i < model.materials.length; i++) {
             const mat = model.materials[i];
-            const item = createListItem(i, mat.nameLocal || mat.nameUniversal || `材质 ${i}`);
+            const item = createListItem(i, mat.nameLocal || mat.nameUniversal || `${I18n.t('materials.item')} ${i}`);
             item.addEventListener('click', () => selectMaterial(i));
             list.appendChild(item);
         }
@@ -231,14 +295,12 @@
         document.getElementById('mat-edge-size').value = mat.edgeScale;
         document.getElementById('mat-surface-count').value = mat.surfaceCount;
 
-        // Flags
         document.getElementById('mat-flag-nocull').checked = !!(mat.flags & 0x01);
         document.getElementById('mat-flag-shadow').checked = !!(mat.flags & 0x02);
         document.getElementById('mat-flag-drawshadow').checked = !!(mat.flags & 0x04);
         document.getElementById('mat-flag-receiveshadow').checked = !!(mat.flags & 0x08);
         document.getElementById('mat-flag-edge').checked = !!(mat.flags & 0x10);
 
-        // Bind changes
         document.getElementById('mat-name-local').oninput = (e) => { mat.nameLocal = e.target.value; };
         document.getElementById('mat-name-universal').oninput = (e) => { mat.nameUniversal = e.target.value; };
         document.getElementById('mat-diffuse-color').oninput = (e) => {
@@ -262,7 +324,6 @@
         document.getElementById('mat-edge-alpha').oninput = (e) => { mat.edgeColor[3] = parseFloat(e.target.value) || 1; };
         document.getElementById('mat-edge-size').oninput = (e) => { mat.edgeScale = parseFloat(e.target.value) || 0; };
 
-        // Flag changes
         const updateFlags = () => {
             mat.flags = 0;
             if (document.getElementById('mat-flag-nocull').checked) mat.flags |= 0x01;
@@ -283,7 +344,7 @@
 
         for (let i = 0; i < model.bones.length; i++) {
             const bone = model.bones[i];
-            const item = createListItem(i, bone.nameLocal || bone.nameUniversal || `骨骼 ${i}`);
+            const item = createListItem(i, bone.nameLocal || bone.nameUniversal || `${I18n.t('bones.item')} ${i}`);
             item.addEventListener('click', () => selectBone(i));
             list.appendChild(item);
         }
@@ -308,7 +369,6 @@
         document.getElementById('bone-parent-index').value = bone.parentIndex;
         document.getElementById('bone-layer').value = bone.layer;
 
-        // Flags
         document.getElementById('bone-flag-indexed-tail').checked = !!(bone.flags & 0x0001);
         document.getElementById('bone-flag-rotatable').checked = !!(bone.flags & 0x0002);
         document.getElementById('bone-flag-translatable').checked = !!(bone.flags & 0x0004);
@@ -316,7 +376,6 @@
         document.getElementById('bone-flag-enabled').checked = !!(bone.flags & 0x0010);
         document.getElementById('bone-flag-ik').checked = !!(bone.flags & 0x0020);
 
-        // Bind changes
         document.getElementById('bone-name-local').oninput = (e) => { bone.nameLocal = e.target.value; };
         document.getElementById('bone-name-universal').oninput = (e) => { bone.nameUniversal = e.target.value; };
         document.getElementById('bone-pos-x').oninput = (e) => { bone.position[0] = parseFloat(e.target.value) || 0; };
@@ -332,11 +391,11 @@
         document.getElementById('morph-count').textContent = model.morphs.length;
         list.innerHTML = '';
 
-        const morphTypeNames = ['组合', '顶点', '骨骼', 'UV', 'UV扩展1', 'UV扩展2', 'UV扩展3', 'UV扩展4', '材质', '翻转', '冲击'];
+        const morphTypeNames = getMorphTypeNames();
 
         for (let i = 0; i < model.morphs.length; i++) {
             const morph = model.morphs[i];
-            const item = createListItem(i, `${morph.nameLocal || morph.nameUniversal || `表情 ${i}`} [${morphTypeNames[morph.type] || '未知'}]`);
+            const item = createListItem(i, `${morph.nameLocal || morph.nameUniversal || `${I18n.t('morphs.item')} ${i}`} [${morphTypeNames[morph.type] || '?'}]`);
             item.addEventListener('click', () => selectMorph(i));
             list.appendChild(item);
         }
@@ -351,17 +410,16 @@
         const morph = model.morphs[index];
         if (!morph) return;
 
-        const morphTypeNames = ['组合', '顶点', '骨骼', 'UV', 'UV扩展1', 'UV扩展2', 'UV扩展3', 'UV扩展4', '材质', '翻转', '冲击'];
+        const morphTypeNames = getMorphTypeNames();
 
         highlightListItem('morph-list', index);
         document.getElementById('morph-detail').style.display = 'block';
         document.getElementById('morph-name-local').value = morph.nameLocal;
         document.getElementById('morph-name-universal').value = morph.nameUniversal;
         document.getElementById('morph-panel').value = morph.panelType;
-        document.getElementById('morph-type').value = morphTypeNames[morph.type] || `类型 ${morph.type}`;
+        document.getElementById('morph-type').value = morphTypeNames[morph.type] || `Type ${morph.type}`;
         document.getElementById('morph-offset-count').value = morph.offsets.length;
 
-        // Bind changes
         document.getElementById('morph-name-local').oninput = (e) => { morph.nameLocal = e.target.value; };
         document.getElementById('morph-name-universal').oninput = (e) => { morph.nameUniversal = e.target.value; };
         document.getElementById('morph-panel').onchange = (e) => { morph.panelType = parseInt(e.target.value); };
@@ -375,7 +433,7 @@
 
         for (let i = 0; i < model.rigidBodies.length; i++) {
             const rb = model.rigidBodies[i];
-            const item = createListItem(i, rb.nameLocal || rb.nameUniversal || `刚体 ${i}`);
+            const item = createListItem(i, rb.nameLocal || rb.nameUniversal || `${I18n.t('rigidbodies.item')} ${i}`);
             item.addEventListener('click', () => selectRigidbody(i));
             list.appendChild(item);
         }
@@ -404,7 +462,6 @@
         document.getElementById('rb-mass').value = rb.mass;
         document.getElementById('rb-physics-mode').value = rb.physicsMode;
 
-        // Bind changes
         document.getElementById('rb-name-local').oninput = (e) => { rb.nameLocal = e.target.value; };
         document.getElementById('rb-name-universal').oninput = (e) => { rb.nameUniversal = e.target.value; };
         document.getElementById('rb-shape').onchange = (e) => { rb.shape = parseInt(e.target.value); };
@@ -426,7 +483,7 @@
 
         for (let i = 0; i < model.joints.length; i++) {
             const joint = model.joints[i];
-            const item = createListItem(i, joint.nameLocal || joint.nameUniversal || `关节 ${i}`);
+            const item = createListItem(i, joint.nameLocal || joint.nameUniversal || `${I18n.t('joints.item')} ${i}`);
             item.addEventListener('click', () => selectJoint(i));
             list.appendChild(item);
         }
@@ -450,7 +507,6 @@
         document.getElementById('joint-pos-y').value = joint.position[1];
         document.getElementById('joint-pos-z').value = joint.position[2];
 
-        // Bind changes
         document.getElementById('joint-name-local').oninput = (e) => { joint.nameLocal = e.target.value; };
         document.getElementById('joint-name-universal').oninput = (e) => { joint.nameUniversal = e.target.value; };
         document.getElementById('joint-type').onchange = (e) => { joint.type = parseInt(e.target.value); };

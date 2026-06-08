@@ -61,6 +61,40 @@ body {
     color: var(--text-secondary);
 }
 
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.lang-switcher {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.btn-lang {
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-lang:hover {
+    color: var(--text-primary);
+}
+
+.btn-lang.active {
+    background: var(--accent);
+    color: white;
+}
+
 /* Buttons */
 .btn {
     padding: 6px 12px;
