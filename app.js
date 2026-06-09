@@ -295,6 +295,12 @@
         document.getElementById('mat-edge-size').value = mat.edgeScale;
         document.getElementById('mat-surface-count').value = mat.surfaceCount;
 
+        // Texture info
+        updateTexturePreview(index);
+
+        // Highlight in viewport
+        viewport.highlightMaterial(index);
+
         document.getElementById('mat-flag-nocull').checked = !!(mat.flags & 0x01);
         document.getElementById('mat-flag-shadow').checked = !!(mat.flags & 0x02);
         document.getElementById('mat-flag-drawshadow').checked = !!(mat.flags & 0x04);
@@ -306,13 +312,21 @@
         document.getElementById('mat-diffuse-color').oninput = (e) => {
             const rgb = hexToRgb(e.target.value);
             mat.diffuse[0] = rgb[0]; mat.diffuse[1] = rgb[1]; mat.diffuse[2] = rgb[2];
+            viewport.updateMaterialColor(index, 'diffuse', mat.diffuse);
         };
-        document.getElementById('mat-diffuse-alpha').oninput = (e) => { mat.diffuse[3] = parseFloat(e.target.value) || 1; };
+        document.getElementById('mat-diffuse-alpha').oninput = (e) => {
+            mat.diffuse[3] = parseFloat(e.target.value) || 1;
+            viewport.updateMaterialColor(index, 'diffuse', mat.diffuse);
+        };
         document.getElementById('mat-specular-color').oninput = (e) => {
             const rgb = hexToRgb(e.target.value);
             mat.specular[0] = rgb[0]; mat.specular[1] = rgb[1]; mat.specular[2] = rgb[2];
+            viewport.updateMaterialColor(index, 'specular', mat.specular);
         };
-        document.getElementById('mat-specular-strength').oninput = (e) => { mat.specularStrength = parseFloat(e.target.value) || 0; };
+        document.getElementById('mat-specular-strength').oninput = (e) => {
+            mat.specularStrength = parseFloat(e.target.value) || 0;
+            viewport.updateMaterialColor(index, 'shininess', mat.specularStrength);
+        };
         document.getElementById('mat-ambient-color').oninput = (e) => {
             const rgb = hexToRgb(e.target.value);
             mat.ambient[0] = rgb[0]; mat.ambient[1] = rgb[1]; mat.ambient[2] = rgb[2];
@@ -335,6 +349,152 @@
         ['mat-flag-nocull', 'mat-flag-shadow', 'mat-flag-drawshadow', 'mat-flag-receiveshadow', 'mat-flag-edge']
             .forEach(id => document.getElementById(id).onchange = updateFlags);
     }
+
+    // Texture management
+    function updateTexturePreview(materialIndex) {
+        const mat = model.materials[materialIndex];
+        const previewEl = document.getElementById('mat-texture-preview');
+        const pathEl = document.getElementById('mat-texture-path');
+
+        // Show texture path
+        const texIndex = mat.textureIndex;
+        if (texIndex >= 0 && texIndex < model.textures.length) {
+            pathEl.textContent = model.textures[texIndex];
+            pathEl.title = model.textures[texIndex];
+        } else {
+            pathEl.textContent = '-';
+            pathEl.title = '';
+        }
+
+        // Show texture preview if loaded
+        if (materialTextureUrls[materialIndex]) {
+            previewEl.innerHTML = `<img src="${materialTextureUrls[materialIndex]}" alt="texture">`;
+        } else {
+            previewEl.innerHTML = `<span class="texture-placeholder">${I18n.t('materials.noTexture')}</span>`;
+        }
+    }
+
+    // Store texture URLs per material
+    const materialTextureUrls = {};
+
+    // Load texture button
+    document.getElementById('btn-load-texture').addEventListener('click', () => {
+        if (selectedMaterialIndex < 0) return;
+        document.getElementById('texture-file-input').click();
+    });
+
+    document.getElementById('texture-file-input').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file || selectedMaterialIndex < 0) return;
+
+        const url = URL.createObjectURL(file);
+        materialTextureUrls[selectedMaterialIndex] = url;
+
+        // Apply to viewport
+        viewport.applyTextureToMaterial(selectedMaterialIndex, url);
+
+        // Update preview
+        updateTexturePreview(selectedMaterialIndex);
+
+        // Update texture path in model
+        const mat = model.materials[selectedMaterialIndex];
+        const newTexPath = file.name;
+        if (mat.textureIndex >= 0 && mat.textureIndex < model.textures.length) {
+            model.textures[mat.textureIndex] = newTexPath;
+        } else {
+            // Add new texture entry
+            model.textures.push(newTexPath);
+            mat.textureIndex = model.textures.length - 1;
+        }
+
+        // Reset file input
+        e.target.value = '';
+    });
+
+    // Remove texture button
+    document.getElementById('btn-remove-texture').addEventListener('click', () => {
+        if (selectedMaterialIndex < 0) return;
+
+        // Remove from viewport
+        viewport.applyTextureToMaterial(selectedMaterialIndex, null);
+
+        // Clean up URL
+        if (materialTextureUrls[selectedMaterialIndex]) {
+            URL.revokeObjectURL(materialTextureUrls[selectedMaterialIndex]);
+            delete materialTextureUrls[selectedMaterialIndex];
+        }
+
+        // Update preview
+        updateTexturePreview(selectedMaterialIndex);
+    });
+
+    // Material presets
+    const materialPresets = {
+        silk: {
+            specular: [1.0, 1.0, 1.0],
+            specularStrength: 80,
+            ambient: [0.4, 0.4, 0.45],
+            flags: 0x01 | 0x02 | 0x04 | 0x08 // double-sided + all shadows
+        },
+        denim: {
+            specular: [0.15, 0.15, 0.2],
+            specularStrength: 8,
+            ambient: [0.15, 0.15, 0.25],
+            flags: 0x02 | 0x04 | 0x08 | 0x10
+        },
+        leather: {
+            specular: [0.5, 0.4, 0.3],
+            specularStrength: 35,
+            ambient: [0.1, 0.08, 0.05],
+            flags: 0x02 | 0x04 | 0x08 | 0x10
+        },
+        cotton: {
+            specular: [0.2, 0.2, 0.2],
+            specularStrength: 5,
+            ambient: [0.3, 0.3, 0.3],
+            flags: 0x02 | 0x04 | 0x08 | 0x10
+        },
+        velvet: {
+            specular: [0.3, 0.25, 0.35],
+            specularStrength: 15,
+            ambient: [0.2, 0.15, 0.25],
+            flags: 0x01 | 0x02 | 0x04 | 0x08 | 0x10
+        },
+        metal: {
+            specular: [1.0, 1.0, 1.0],
+            specularStrength: 120,
+            ambient: [0.1, 0.1, 0.1],
+            flags: 0x02 | 0x04 | 0x08 | 0x10
+        }
+    };
+
+    document.getElementById('material-preset-grid').addEventListener('click', (e) => {
+        const btn = e.target.closest('.preset-btn');
+        if (!btn || selectedMaterialIndex < 0) return;
+
+        const presetName = btn.dataset.preset;
+        const preset = materialPresets[presetName];
+        if (!preset) return;
+
+        const mat = model.materials[selectedMaterialIndex];
+
+        // Apply preset values
+        mat.specular = [...preset.specular];
+        mat.specularStrength = preset.specularStrength;
+        mat.ambient = [...preset.ambient];
+        mat.flags = preset.flags;
+
+        // Update viewport
+        viewport.updateMaterialColor(selectedMaterialIndex, 'specular', mat.specular);
+        viewport.updateMaterialColor(selectedMaterialIndex, 'shininess', mat.specularStrength);
+
+        // Refresh the form
+        selectMaterial(selectedMaterialIndex);
+
+        // Highlight active preset
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    });
 
     // Bone list
     function populateBoneList() {

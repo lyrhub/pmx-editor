@@ -16,6 +16,8 @@ class PMXViewport {
         this.frameCount = 0;
         this.lastTime = performance.now();
         this.fps = 0;
+        this.textureLoader = new THREE.TextureLoader();
+        this.loadedTextures = {}; // cache: path -> THREE.Texture
 
         this.init();
         this.animate();
@@ -97,8 +99,12 @@ class PMXViewport {
             this.scene.remove(this.mesh);
             this.mesh.geometry.dispose();
             if (Array.isArray(this.mesh.material)) {
-                this.mesh.material.forEach(m => m.dispose());
+                this.mesh.material.forEach(m => {
+                    if (m.map) m.map.dispose();
+                    m.dispose();
+                });
             } else {
+                if (this.mesh.material.map) this.mesh.material.map.dispose();
                 this.mesh.material.dispose();
             }
         }
@@ -106,10 +112,12 @@ class PMXViewport {
             this.scene.remove(this.boneMesh);
         }
 
+        // Clear texture cache
+        this.loadedTextures = {};
+
         // Build geometry
         const geometry = new THREE.BufferGeometry();
 
-        // Positions
         const positions = new Float32Array(model.vertices.length * 3);
         const normals = new Float32Array(model.vertices.length * 3);
         const uvs = new Float32Array(model.vertices.length * 2);
@@ -130,7 +138,7 @@ class PMXViewport {
         geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
         geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 
-        // Indices (surfaces) - split by material groups
+        // Indices
         const indices = new Uint32Array(model.surfaces);
         geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
@@ -175,7 +183,90 @@ class PMXViewport {
 
         // Update triangle count
         const trisEl = document.getElementById('viewport-tris');
-        if (trisEl) trisEl.textContent = `三角面: ${(model.surfaces.length / 3).toLocaleString()}`;
+        if (trisEl) trisEl.textContent = `${I18n.t('viewport.triangles')}: ${(model.surfaces.length / 3).toLocaleString()}`;
+    }
+
+    /**
+     * Apply a texture (from a File/Blob URL or data URL) to a specific material index
+     */
+    applyTextureToMaterial(materialIndex, textureUrl) {
+        if (!this.mesh || !Array.isArray(this.mesh.material)) return;
+        if (materialIndex < 0 || materialIndex >= this.mesh.material.length) return;
+
+        const material = this.mesh.material[materialIndex];
+
+        if (textureUrl) {
+            const texture = this.textureLoader.load(textureUrl, () => {
+                material.needsUpdate = true;
+            });
+            texture.flipY = false; // PMX textures are typically not flipped
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            
+            // Dispose old texture
+            if (material.map) {
+                material.map.dispose();
+            }
+            material.map = texture;
+            material.needsUpdate = true;
+        } else {
+            // Remove texture
+            if (material.map) {
+                material.map.dispose();
+                material.map = null;
+                material.needsUpdate = true;
+            }
+        }
+    }
+
+    /**
+     * Update material color properties in real-time
+     */
+    updateMaterialColor(materialIndex, property, color) {
+        if (!this.mesh || !Array.isArray(this.mesh.material)) return;
+        if (materialIndex < 0 || materialIndex >= this.mesh.material.length) return;
+
+        const material = this.mesh.material[materialIndex];
+        switch (property) {
+            case 'diffuse':
+                material.color.setRGB(color[0], color[1], color[2]);
+                if (color.length > 3) {
+                    material.opacity = color[3];
+                    material.transparent = color[3] < 1.0;
+                }
+                break;
+            case 'specular':
+                material.specular.setRGB(color[0], color[1], color[2]);
+                break;
+            case 'shininess':
+                material.shininess = color;
+                break;
+        }
+        material.needsUpdate = true;
+    }
+
+    /**
+     * Highlight a specific material group (for selection feedback)
+     */
+    highlightMaterial(materialIndex) {
+        if (!this.mesh || !Array.isArray(this.mesh.material)) return;
+        
+        this.mesh.material.forEach((mat, i) => {
+            mat.emissive = mat.emissive || new THREE.Color(0, 0, 0);
+            if (i === materialIndex) {
+                mat.emissive.setRGB(0.1, 0.05, 0.15);
+            } else {
+                mat.emissive.setRGB(0, 0, 0);
+            }
+        });
+    }
+
+    clearMaterialHighlight() {
+        if (!this.mesh || !Array.isArray(this.mesh.material)) return;
+        this.mesh.material.forEach(mat => {
+            mat.emissive = mat.emissive || new THREE.Color(0, 0, 0);
+            mat.emissive.setRGB(0, 0, 0);
+        });
     }
 
     buildBoneVisualization(bones) {
@@ -189,7 +280,6 @@ class PMXViewport {
             const bone = bones[i];
             const pos = bone.position;
 
-            // Bone point
             const sphere = new THREE.Mesh(
                 new THREE.SphereGeometry(0.1, 6, 6),
                 new THREE.MeshBasicMaterial({ color: 0x00ff88 })
@@ -197,7 +287,6 @@ class PMXViewport {
             sphere.position.set(pos[0], pos[1], pos[2]);
             boneGroup.add(sphere);
 
-            // Connection to parent
             if (bone.parentIndex >= 0 && bone.parentIndex < bones.length) {
                 const parent = bones[bone.parentIndex];
                 const points = [
