@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMX Editor - 帮助文档</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #1e1e2e;
+            --bg2: #2d2d3f;
+            --text: #e0e0e0;
+            --text2: #a0a0b0;
+            --accent: #7c6ff7;
+            --border: #404060;
+        }
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 0;
+        }
+        .help-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+        .help-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        .help-header h1 { font-size: 28px; color: var(--accent); margin-bottom: 8px; }
+        .help-header p { color: var(--text2); font-size: 14px; }
+        .lang-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .lang-toggle button {
+            padding: 6px 16px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg2);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .lang-toggle button.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-link:hover { text-decoration: underline; }
+        h2 {
+            font-size: 20px;
+            color: var(--accent);
+            margin: 32px 0 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        h3 { font-size: 16px; margin: 20px 0 8px; color: #9589f5; }
+        p, li { font-size: 14px; margin-bottom: 8px; }
+        ul, ol { padding-left: 20px; margin-bottom: 12px; }
+        code {
+            background: var(--bg2);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+            color: #f0b060;
+        }
+        .tip {
+            background: var(--bg2);
+            border-left: 3px solid var(--accent);
+            padding: 10px 14px;
+            margin: 12px 0;
+            border-radius: 0 4px 4px 0;
+            font-size: 13px;
+        }
+        .tip::before { content: "💡 "; }
+        .shortcut-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 13px;
+        }
+        .shortcut-table th, .shortcut-table td {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+        .shortcut-table th {
+            background: var(--bg2);
+            color: var(--accent);
+        }
+        .section { margin-bottom: 32px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="help-container">
+        <a href="index.html" class="back-link">← 返回编辑器 / Back to Editor</a>
+
+        <div class="help-header">
+            <h1>PMX Editor 帮助文档</h1>
+            <p>Web-based PMX Model Editor for MikuMikuDance</p>
+            <div class="lang-toggle">
+                <button id="help-lang-zh" class="active" onclick="switchLang('zh')">中文</button>
+                <button id="help-lang-en" onclick="switchLang('en')">English</button>
+            </div>
+        </div>
+
+        <!-- Chinese Version -->
+        <div id="content-zh">
+            <div class="section">
+                <h2>快速开始</h2>
+                <ol>
+                    <li>点击工具栏 <code>📂 打开文件</code> 按钮，选择一个 <code>.pmx</code> 文件</li>
+                    <li>文件解析后，3D 视口会自动显示模型，左侧面板展示详细数据</li>
+                    <li>通过左侧选项卡切换不同的编辑面板</li>
+                    <li>编辑完成后点击 <code>💾 保存</code> 按钮导出修改后的 PMX 文件</li>
+                </ol>
+                <div class="tip">支持 PMX 2.0 和 2.1 版本。文件在浏览器本地处理，不会上传到服务器。</div>
+            </div>
+
+            <div class="section">
+                <h2>3D 视口操作</h2>
+                <table class="shortcut-table">
+                    <tr><th>操作</th><th>方式</th></tr>
+                    <tr><td>旋转视角</td><td>鼠标左键拖拽</td></tr>
+                    <tr><td>平移视角</td><td>鼠标右键拖拽</td></tr>
+                    <tr><td>缩放</td><td>鼠标滚轮</td></tr>
+                    <tr><td>线框模式</td><td>点击右上角 🔲 按钮</td></tr>
+                    <tr><td>显示骨骼</td><td>点击右上角 🦴 按钮</td></tr>
+                    <tr><td>重置视角</td><td>点击右上角 🎯 按钮</td></tr>
+                </table>
+                <div class="tip">左下角显示实时 FPS 和三角面数量。</div>
+            </div>
+
+            <div class="section">
+                <h2>📋 信息面板</h2>
+                <p>显示和编辑模型的基本信息：</p>
+                <ul>
+                    <li><b>名称 (日文/英文)</b> — 模型在 MMD 中显示的名称</li>
+                    <li><b>注释 (日文/英文)</b> — 模型的版权信息、制作者说明等</li>
+                    <li><b>文件统计</b> — 版本号、编码格式、各数据的数量汇总</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>📐 顶点面板</h2>
+                <p>查看和编辑模型的顶点数据。</p>
+                <ul>
+                    <li>列表默认显示前 200 个顶点，输入索引号可跳转到指定顶点</li>
+                    <li>点击顶点后可编辑：位置 (X/Y/Z)、法线、UV 坐标、边缘缩放</li>
+                </ul>
+                <h3>字段说明</h3>
+                <ul>
+                    <li><b>位置</b> — 顶点在 3D 空间中的坐标</li>
+                    <li><b>法线</b> — 决定光照效果的方向向量</li>
+                    <li><b>UV</b> — 纹理贴图坐标 (0~1 范围)</li>
+                    <li><b>边缘缩放</b> — 铅笔描边的粗细系数，1.0 约为 1 像素</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>🎨 材质面板</h2>
+                <p>编辑模型的材质属性，控制外观效果。</p>
+
+                <h3>基本属性</h3>
+                <ul>
+                    <li><b>漫反射颜色 (RGBA)</b> — 材质的基础颜色，A 控制透明度</li>
+                    <li><b>高光颜色</b> — 反射光的颜色</li>
+                    <li><b>高光强度</b> — 高光范围大小。丝绸≈80、皮革≈35、棉布≈5</li>
+                    <li><b>环境光颜色</b> — 阴影区域的颜色</li>
+                    <li><b>边缘颜色/大小</b> — 铅笔描边效果的颜色和粗细</li>
+                </ul>
+
+                <h3>纹理贴图</h3>
+                <ul>
+                    <li><b>加载纹理</b> — 点击 📁 按钮从本地选择图片文件 (PNG/JPG/BMP/TGA)</li>
+                    <li><b>纹理预览</b> — 面板中显示缩略图，同时 3D 视口实时更新</li>
+                    <li><b>移除纹理</b> — 点击 🗑️ 按钮清除纹理，恢复纯色显示</li>
+                    <li><b>纹理路径</b> — 显示 PMX 文件中记录的纹理文件路径</li>
+                </ul>
+
+                <h3>材质预设</h3>
+                <p>一键应用预设的布料/材质参数：</p>
+                <table class="shortcut-table">
+                    <tr><th>预设</th><th>效果</th><th>适用场景</th></tr>
+                    <tr><td>丝绸</td><td>强高光、冷调环境光、双面</td><td>礼服、丝带、内衣</td></tr>
+                    <tr><td>牛仔</td><td>低光泽、蓝调</td><td>牛仔裤、牛仔外套</td></tr>
+                    <tr><td>皮革</td><td>中等光泽、暖色高光</td><td>皮衣、皮靴、皮带</td></tr>
+                    <tr><td>棉布</td><td>几乎无高光、柔和</td><td>T恤、卫衣、休闲裤</td></tr>
+                    <tr><td>天鹅绒</td><td>轻微光泽、紫调</td><td>礼服、窗帘</td></tr>
+                    <tr><td>金属</td><td>极强反射</td><td>盔甲、首饰、金属件</td></tr>
+                </table>
+                <div class="tip">预设只修改高光、环境光和标志位，不会改变漫反射颜色和纹理。可以先设置颜色/纹理，再应用预设。</div>
+
+                <h3>标志位</h3>
+                <ul>
+                    <li><b>双面</b> — 关闭背面剔除，薄布料和头发常需要</li>
+                    <li><b>地面阴影</b> — 在地面投射阴影</li>
+                    <li><b>投射阴影</b> — 向其他物体投射阴影</li>
+                    <li><b>接受阴影</b> — 接受其他物体的阴影</li>
+                    <li><b>边缘</b> — 启用铅笔描边效果</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>🦴 骨骼面板</h2>
+                <p>查看和编辑骨骼数据。</p>
+                <ul>
+                    <li><b>名称</b> — 骨骼显示名（日文为 MMD 主显示，英文为兼容名）</li>
+                    <li><b>位置</b> — 骨骼在 3D 空间的初始坐标</li>
+                    <li><b>父骨骼索引</b> — 指向父骨骼的编号，-1 表示根骨骼</li>
+                    <li><b>层级</b> — 变形计算顺序的层级</li>
+                </ul>
+                <h3>骨骼标志</h3>
+                <ul>
+                    <li><b>索引尾部</b> — 尾端连接方式：勾选=连接到另一骨骼，不勾选=偏移向量</li>
+                    <li><b>旋转</b> — 允许旋转操作</li>
+                    <li><b>平移</b> — 允许平移操作</li>
+                    <li><b>可见</b> — 在 MMD 中是否显示</li>
+                    <li><b>启用</b> — 用户是否可操作此骨骼</li>
+                    <li><b>IK</b> — 是否为 IK 骨骼（逆向运动学）</li>
+                </ul>
+                <div class="tip">在 3D 视口中开启骨骼显示（🦴按钮）可以可视化骨骼位置和层级关系。</div>
+            </div>
+
+            <div class="section">
+                <h2>😊 表情面板</h2>
+                <p>查看和编辑 Morph（表情/变形）数据。</p>
+                <ul>
+                    <li><b>面板类型</b> — 决定在 MMD 中显示的分类位置
+                        <ul>
+                            <li>系统保留 — 基础表情（通常为 base）</li>
+                            <li>眉毛 — 眉毛相关</li>
+                            <li>眼睛 — 眨眼、视线等</li>
+                            <li>嘴巴 — 口型、微笑等</li>
+                            <li>其他 — 其他变形</li>
+                        </ul>
+                    </li>
+                    <li><b>类型</b> — Morph 的技术类型（顶点/骨骼/UV/材质/组合等）</li>
+                    <li><b>偏移数据数量</b> — 该 Morph 影响的顶点/骨骼/材质数</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>⚙️ 刚体面板</h2>
+                <p>编辑物理刚体参数，控制模型的物理模拟效果。</p>
+                <ul>
+                    <li><b>形状</b> — 球体、方盒、胶囊（碰撞体形状）</li>
+                    <li><b>尺寸</b> — 碰撞体的三维大小</li>
+                    <li><b>位置</b> — 碰撞体的空间位置</li>
+                    <li><b>质量</b> — 影响物理模拟的重量</li>
+                    <li><b>物理模式</b>：
+                        <ul>
+                            <li>跟随骨骼 — 刚体跟随骨骼运动（如身体部位）</li>
+                            <li>物理演算 — 刚体受重力影响（如头发、裙子）</li>
+                            <li>物理+骨骼 — 以骨骼为支点进行物理演算</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>🔗 关节面板</h2>
+                <p>编辑连接刚体的关节（约束），定义物理运动的范围。</p>
+                <ul>
+                    <li><b>类型</b> — Spring 6DOF（弹簧六自由度）最常用，其他为 PMX 2.1 扩展类型</li>
+                    <li><b>位置</b> — 关节在 3D 空间中的位置</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>换装/换布料 工作流</h2>
+                <p>典型的"给角色换衣服材质"操作步骤：</p>
+                <ol>
+                    <li>打开 PMX 文件</li>
+                    <li>切换到 <b>🎨 材质面板</b></li>
+                    <li>在材质列表中找到要修改的服装材质（如"上衣"、"裙子"）</li>
+                    <li>（可选）点击 <b>📁 加载纹理</b> 更换纹理贴图</li>
+                    <li>（可选）使用 <b>材质预设</b> 快速切换质感（如"丝绸"→"牛仔"）</li>
+                    <li>（可选）手动调整漫反射颜色改变色调</li>
+                    <li>确认 3D 视口效果满意后点击 <b>💾 保存</b></li>
+                </ol>
+                <div class="tip">选中材质时 3D 视口会高亮对应区域，方便确认是哪个部件。</div>
+            </div>
+
+            <div class="section">
+                <h2>语言切换</h2>
+                <p>点击右上角的 <code>中文</code> / <code>EN</code> 按钮切换界面语言。设置会自动保存，下次打开时保持。</p>
+            </div>
+
+            <div class="section">
+                <h2>注意事项</h2>
+                <ul>
+                    <li>本工具为纯前端应用，所有文件操作在浏览器本地完成</li>
+                    <li>加载的纹理文件仅用于预览，保存时 PMX 文件只记录纹理路径名</li>
+                    <li>大文件（>100MB）解析可能需要较长时间</li>
+                    <li>建议在 Chrome 或 Edge 浏览器中使用以获得最佳性能</li>
+                    <li>修改后的文件可直接在 MikuMikuDance 或桌面版 PMX Editor 中验证</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- English Version -->
+        <div id="content-en" class="hidden">
+            <div class="section">
+                <h2>Getting Started</h2>
+                <ol>
+                    <li>Click the <code>📂 Open File</code> button in the toolbar and select a <code>.pmx</code> file</li>
+                    <li>Once parsed, the 3D viewport displays the model and the left panel shows detailed data</li>
+                    <li>Switch between editing panels using the tabs on the left</li>
+                    <li>Click <code>💾 Save</code> to export the modified PMX file when done</li>
+                </ol>
+                <div class="tip">Supports PMX 2.0 and 2.1. Files are processed locally in your browser — nothing is uploaded.</div>
+            </div>
+
+            <div class="section">
+                <h2>3D Viewport Controls</h2>
+                <table class="shortcut-table">
+                    <tr><th>Action</th><th>Method</th></tr>
+                    <tr><td>Rotate</td><td>Left-click drag</td></tr>
+                    <tr><td>Pan</td><td>Right-click drag</td></tr>
+                    <tr><td>Zoom</td><td>Mouse wheel</td></tr>
+                    <tr><td>Wireframe mode</td><td>Click 🔲 button (top-right)</td></tr>
+                    <tr><td>Show bones</td><td>Click 🦴 button (top-right)</td></tr>
+                    <tr><td>Reset camera</td><td>Click 🎯 button (top-right)</td></tr>
+                </table>
+                <div class="tip">The bottom-left corner shows real-time FPS and triangle count.</div>
+            </div>
+
+            <div class="section">
+                <h2>📋 Info Panel</h2>
+                <p>View and edit basic model information:</p>
+                <ul>
+                    <li><b>Name (Japanese/English)</b> — Display name shown in MMD</li>
+                    <li><b>Comment (Japanese/English)</b> — Copyright, author info, usage terms</li>
+                    <li><b>File Statistics</b> — Version, encoding, and data count summary</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>📐 Vertices Panel</h2>
+                <p>View and edit vertex data.</p>
+                <ul>
+                    <li>The list shows the first 200 vertices by default. Enter an index to jump to a specific vertex</li>
+                    <li>Click a vertex to edit: Position (X/Y/Z), Normal, UV coordinates, Edge scale</li>
+                </ul>
+                <h3>Field Reference</h3>
+                <ul>
+                    <li><b>Position</b> — 3D coordinates in model space</li>
+                    <li><b>Normal</b> — Direction vector for lighting calculations</li>
+                    <li><b>UV</b> — Texture mapping coordinates (0~1 range)</li>
+                    <li><b>Edge Scale</b> — Pencil outline thickness multiplier (1.0 ≈ 1 pixel)</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>🎨 Materials Panel</h2>
+                <p>Edit material properties that control the model's appearance.</p>
+
+                <h3>Basic Properties</h3>
+                <ul>
+                    <li><b>Diffuse Color (RGBA)</b> — Base color; A controls transparency</li>
+                    <li><b>Specular Color</b> — Color of reflected highlights</li>
+                    <li><b>Specular Strength</b> — Size of highlight. Silk≈80, Leather≈35, Cotton≈5</li>
+                    <li><b>Ambient Color</b> — Color in shadowed areas</li>
+                    <li><b>Edge Color/Size</b> — Pencil outline color and thickness</li>
+                </ul>
+
+                <h3>Texture Management</h3>
+                <ul>
+                    <li><b>Load Texture</b> — Click 📁 to select a local image file (PNG/JPG/BMP/TGA)</li>
+                    <li><b>Texture Preview</b> — Shows thumbnail in panel; 3D viewport updates in real-time</li>
+                    <li><b>Remove Texture</b> — Click 🗑️ to clear texture and revert to solid color</li>
+                    <li><b>Texture Path</b> — Shows the texture filename stored in the PMX file</li>
+                </ul>
+
+                <h3>Material Presets</h3>
+                <p>One-click fabric/material parameter presets:</p>
+                <table class="shortcut-table">
+                    <tr><th>Preset</th><th>Effect</th><th>Use Cases</th></tr>
+                    <tr><td>Silk</td><td>High specular, cool ambient, double-sided</td><td>Gowns, ribbons, lingerie</td></tr>
+                    <tr><td>Denim</td><td>Low gloss, blue tone</td><td>Jeans, denim jackets</td></tr>
+                    <tr><td>Leather</td><td>Medium gloss, warm specular</td><td>Jackets, boots, belts</td></tr>
+                    <tr><td>Cotton</td><td>Near-zero specular, soft</td><td>T-shirts, hoodies, pants</td></tr>
+                    <tr><td>Velvet</td><td>Slight sheen, purple tone</td><td>Gowns, curtains</td></tr>
+                    <tr><td>Metal</td><td>Maximum reflection</td><td>Armor, jewelry, hardware</td></tr>
+                </table>
+                <div class="tip">Presets only change specular, ambient, and flags. They don't modify the diffuse color or texture. Apply color/texture first, then a preset.</div>
+
+                <h3>Flags</h3>
+                <ul>
+                    <li><b>Double-sided</b> — Disables back-face culling (needed for thin fabrics and hair)</li>
+                    <li><b>Ground Shadow</b> — Casts shadow on the ground plane</li>
+                    <li><b>Cast Shadow</b> — Casts shadow onto other objects</li>
+                    <li><b>Receive Shadow</b> — Receives shadows from other objects</li>
+                    <li><b>Edge</b> — Enables pencil-outline effect</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>🦴 Bones Panel</h2>
+                <p>View and edit bone/skeleton data.</p>
+                <ul>
+                    <li><b>Name</b> — Display name (Japanese is primary in MMD, English for compatibility)</li>
+                    <li><b>Position</b> — Initial position in 3D space</li>
+                    <li><b>Parent Index</b> — Index of parent bone (-1 = root bone)</li>
+                    <li><b>Layer</b> — Deformation calculation order</li>
+                </ul>
+                <h3>Bone Flags</h3>
+                <ul>
+                    <li><b>Indexed Tail</b> — Tail connects to another bone (checked) or uses offset vector (unchecked)</li>
+                    <li><b>Rotatable</b> — Allows rotation</li>
+                    <li><b>Translatable</b> — Allows translation/movement</li>
+                    <li><b>Visible</b> — Displayed in MMD</li>
+                    <li><b>Enabled</b> — User-controllable</li>
+                    <li><b>IK</b> — Inverse Kinematics bone</li>
+                </ul>
+                <div class="tip">Enable bone visualization in the viewport (🦴 button) to see bone positions and hierarchy.</div>
+            </div>
+
+            <div class="section">
+                <h2>😊 Morphs Panel</h2>
+                <p>View and edit morph (facial expression/deformation) data.</p>
+                <ul>
+                    <li><b>Panel Type</b> — Category display in MMD:
+                        <ul>
+                            <li>System — Base morph</li>
+                            <li>Eyebrow — Eyebrow expressions</li>
+                            <li>Eye — Blink, gaze, etc.</li>
+                            <li>Mouth — Lip sync, smile, etc.</li>
+                            <li>Other — Other deformations</li>
+                        </ul>
+                    </li>
+                    <li><b>Type</b> — Technical morph type (Vertex/Bone/UV/Material/Group)</li>
+                    <li><b>Offset Count</b> — Number of affected vertices/bones/materials</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>⚙️ Rigidbodies Panel</h2>
+                <p>Edit physics rigid body parameters for simulation.</p>
+                <ul>
+                    <li><b>Shape</b> — Sphere, Box, or Capsule (collision shape)</li>
+                    <li><b>Size</b> — Collision body dimensions</li>
+                    <li><b>Position</b> — Collision body location</li>
+                    <li><b>Mass</b> — Weight for physics simulation</li>
+                    <li><b>Physics Mode</b>:
+                        <ul>
+                            <li>Follow Bone — Rigid body follows bone (body parts)</li>
+                            <li>Physics — Gravity-affected (hair, skirts)</li>
+                            <li>Physics + Bone — Physics with bone as pivot</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>🔗 Joints Panel</h2>
+                <p>Edit joints (constraints) that connect rigid bodies and define motion ranges.</p>
+                <ul>
+                    <li><b>Type</b> — Spring 6DOF is most common; others are PMX 2.1 extensions</li>
+                    <li><b>Position</b> — Joint location in 3D space</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>Outfit/Fabric Change Workflow</h2>
+                <p>Typical steps to change a character's clothing material:</p>
+                <ol>
+                    <li>Open the PMX file</li>
+                    <li>Switch to the <b>🎨 Materials panel</b></li>
+                    <li>Find the clothing material in the list (e.g., "jacket", "skirt")</li>
+                    <li>(Optional) Click <b>📁 Load Texture</b> to replace the texture</li>
+                    <li>(Optional) Use a <b>Material Preset</b> to quickly switch fabric type (e.g., "Silk" → "Denim")</li>
+                    <li>(Optional) Manually adjust the diffuse color to change the hue</li>
+                    <li>Confirm the 3D preview looks correct, then click <b>💾 Save</b></li>
+                </ol>
+                <div class="tip">When a material is selected, the 3D viewport highlights the corresponding area to help identify which part it is.</div>
+            </div>
+
+            <div class="section">
+                <h2>Language Switching</h2>
+                <p>Click the <code>中文</code> / <code>EN</code> buttons in the top-right corner to switch the interface language. Your preference is saved automatically.</p>
+            </div>
+
+            <div class="section">
+                <h2>Notes</h2>
+                <ul>
+                    <li>This is a purely client-side application — all file operations happen locally in your browser</li>
+                    <li>Loaded textures are for preview only; the PMX file only stores the texture filename</li>
+                    <li>Large files (>100MB) may take longer to parse</li>
+                    <li>Chrome or Edge browsers recommended for best performance</li>
+                    <li>Saved files can be verified in MikuMikuDance or desktop PMX Editor</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchLang(lang) {
+            document.getElementById('content-zh').classList.toggle('hidden', lang !== 'zh');
+            document.getElementById('content-en').classList.toggle('hidden', lang !== 'en');
+            document.getElementById('help-lang-zh').classList.toggle('active', lang === 'zh');
+            document.getElementById('help-lang-en').classList.toggle('active', lang === 'en');
+        }
+        // Auto-detect from localStorage
+        const savedLang = localStorage.getItem('pmx-editor-lang');
+        if (savedLang === 'en') switchLang('en');
+    </script>
+</body>
+</html>
