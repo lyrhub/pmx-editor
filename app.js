@@ -43,17 +43,83 @@
 
     // File input
     const fileInput = document.getElementById('file-input');
+    const folderInput = document.getElementById('folder-input');
     const btnOpen = document.getElementById('btn-open');
     const btnSave = document.getElementById('btn-save');
 
-    btnOpen.addEventListener('click', () => fileInput.click());
+    // Store all files from folder for texture resolution
+    let folderFiles = {}; // normalized path -> File
 
+    btnOpen.addEventListener('click', () => folderInput.click());
+
+    // Folder-based loading: find PMX and all textures
+    folderInput.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        document.getElementById('loading-overlay').style.display = 'flex';
+
+        // Build file map (normalized relative paths)
+        folderFiles = {};
+        let pmxFile = null;
+        const rootPrefix = findCommonRoot(files);
+
+        for (const file of files) {
+            // Normalize path: strip common root, use forward slashes, lowercase for matching
+            let relPath = file.webkitRelativePath || file.name;
+            if (rootPrefix && relPath.startsWith(rootPrefix)) {
+                relPath = relPath.substring(rootPrefix.length);
+            }
+            folderFiles[relPath.toLowerCase()] = file;
+            folderFiles[relPath.replace(/\\/g, '/').toLowerCase()] = file;
+
+            // Also store just the filename
+            const fileName = file.name.toLowerCase();
+            if (!folderFiles[fileName]) {
+                folderFiles[fileName] = file;
+            }
+
+            // Find the PMX file (take the first one found)
+            if (!pmxFile && file.name.toLowerCase().endsWith('.pmx')) {
+                pmxFile = file;
+            }
+        }
+
+        if (!pmxFile) {
+            alert(I18n.t('error.noPmxFound'));
+            document.getElementById('loading-overlay').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('file-name').textContent = pmxFile.name;
+
+        try {
+            const buffer = await pmxFile.arrayBuffer();
+            const parser = new PMXParser(buffer);
+            model = parser.parse();
+
+            updateUI();
+            viewport.loadModel(model);
+            btnSave.disabled = false;
+
+            // Auto-load textures
+            await autoLoadTextures();
+        } catch (err) {
+            alert(`${I18n.t('error.parseFailed')}: ${err.message}`);
+            console.error(err);
+        } finally {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+    });
+
+    // Legacy single file input (kept for fallback)
     fileInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         document.getElementById('loading-overlay').style.display = 'flex';
         document.getElementById('file-name').textContent = file.name;
+        folderFiles = {};
 
         try {
             const buffer = await file.arrayBuffer();
@@ -70,6 +136,69 @@
             document.getElementById('loading-overlay').style.display = 'none';
         }
     });
+
+    // Find common root directory from file list
+    function findCommonRoot(files) {
+        if (files.length === 0) return '';
+        const paths = files.map(f => f.webkitRelativePath || f.name);
+        const first = paths[0];
+        const slashIdx = first.indexOf('/');
+        if (slashIdx === -1) return '';
+        const root = first.substring(0, slashIdx + 1);
+        return root;
+    }
+
+    // Auto-load textures from folder files
+    async function autoLoadTextures() {
+        if (!model || !model.textures || model.textures.length === 0) return;
+        if (Object.keys(folderFiles).length === 0) return;
+
+        let loadedCount = 0;
+
+        for (let i = 0; i < model.materials.length; i++) {
+            const mat = model.materials[i];
+            const texIndex = mat.textureIndex;
+            if (texIndex < 0 || texIndex >= model.textures.length) continue;
+
+            const texPath = model.textures[texIndex];
+            const file = resolveTextureFile(texPath);
+            if (!file) continue;
+
+            // Create object URL and apply
+            const url = URL.createObjectURL(file);
+            materialTextureUrls[i] = url;
+            viewport.applyTextureToMaterial(i, url);
+            loadedCount++;
+        }
+
+        if (loadedCount > 0) {
+            console.log(`Auto-loaded ${loadedCount} textures`);
+        }
+    }
+
+    // Resolve a texture path to a File from the loaded folder
+    function resolveTextureFile(texPath) {
+        if (!texPath) return null;
+
+        // Normalize: forward slashes, lowercase
+        const normalized = texPath.replace(/\\/g, '/').toLowerCase();
+
+        // Try exact relative path match
+        if (folderFiles[normalized]) return folderFiles[normalized];
+
+        // Try just the filename
+        const fileName = normalized.split('/').pop();
+        if (folderFiles[fileName]) return folderFiles[fileName];
+
+        // Try without directory prefix variations
+        const parts = normalized.split('/');
+        for (let i = 0; i < parts.length; i++) {
+            const sub = parts.slice(i).join('/');
+            if (folderFiles[sub]) return folderFiles[sub];
+        }
+
+        return null;
+    }
 
     // Save
     btnSave.addEventListener('click', () => {

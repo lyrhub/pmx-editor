@@ -9,6 +9,7 @@ const I18n = {
         zh: {
             // Toolbar
             'toolbar.open': '📂 打开文件',
+            'toolbar.openFolder': '📂 打开文件夹',
             'toolbar.save': '💾 保存',
             'toolbar.noFile': '未加载文件',
             'toolbar.loading': '正在解析 PMX 文件...',
@@ -168,11 +169,13 @@ const I18n = {
             // Errors
             'error.parseFailed': '解析 PMX 文件失败',
             'error.saveFailed': '保存 PMX 文件失败',
+            'error.noPmxFound': '所选文件夹中未找到 .pmx 文件',
         },
 
         en: {
             // Toolbar
             'toolbar.open': '📂 Open File',
+            'toolbar.openFolder': '📂 Open Folder',
             'toolbar.save': '💾 Save',
             'toolbar.noFile': 'No file loaded',
             'toolbar.loading': 'Parsing PMX file...',
@@ -332,6 +335,7 @@ const I18n = {
             // Errors
             'error.parseFailed': 'Failed to parse PMX file',
             'error.saveFailed': 'Failed to save PMX file',
+            'error.noPmxFound': 'No .pmx file found in the selected folder',
         }
     },
 

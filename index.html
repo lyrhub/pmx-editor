@@ -11,9 +11,10 @@
         <header class="toolbar">
             <div class="toolbar-left">
                 <h1>PMX Editor</h1>
-                <button id="btn-open" class="btn btn-primary" data-i18n="toolbar.open">📂 打开文件</button>
+                <button id="btn-open" class="btn btn-primary" data-i18n="toolbar.openFolder">📂 打开文件夹</button>
                 <button id="btn-save" class="btn btn-success" disabled data-i18n="toolbar.save">💾 保存</button>
                 <input type="file" id="file-input" accept=".pmx" hidden>
+                <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
             </div>
             <div class="toolbar-right">
                 <span id="file-name" class="file-info" data-i18n="toolbar.noFile">未加载文件</span>
